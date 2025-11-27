@@ -26,6 +26,17 @@ Comprehensive API documentation including:
 
 **Use this to:** Integrate your services with the Config Service
 
+### 🏗️ [Reference Data Pattern](./reference-data-pattern.md) ⭐ **Critical**
+Architectural guide demonstrating the reference data pattern:
+- How services use Config Service as authoritative source
+- Foreign key validation patterns
+- Real-world database schema examples
+- Integration patterns with fictional services
+- Performance optimization with caching
+- Migration strategies
+
+**Use this to:** Understand how to architect services that consume reference data
+
 ### 📕 [Usage Guide](./usage-guide.md)
 Practical guide with step-by-step instructions:
 - Quick start tutorial
