@@ -1,126 +1,606 @@
-# Generic Configuration Service - Architecture Documentation
+# Config Service - Complete Architecture Documentation
 
-## 1. System Overview
+## Table of Contents
+1. [Overview](#overview)
+2. [System Architecture](#system-architecture)
+3. [Data Model](#data-model)
+4. [API Design](#api-design)
+5. [Key Features](#key-features)
+6. [Security & Best Practices](#security--best-practices)
 
-The **Generic Configuration Service** is a centralized platform for managing application configurations. It is built on a **"Schema-First"** philosophy, meaning that the structure of configuration data is defined dynamically at runtime using JSON Schemas, rather than being hardcoded in database tables or application code.
+---
 
-### Key Goals
-- **Generic**: Support any type of configuration (Key-Value, Lists, Tables, Hierarchies).
-- **Scalable**: Group configurations by Namespaces (e.g., per service or environment).
-- **Validatable**: Ensure data integrity through strict JSON Schema validation.
-- **Extensible**: Add new configuration types without deploying new code.
+## Overview
 
-## 2. High-Level Architecture
+The Generic Configuration Service is a **schema-driven, zero-code configuration management platform** that enables centralized management of any configuration type without requiring code changes or database migrations.
 
-The system follows a standard 3-tier architecture:
+### Core Principles
+
+1. **Schema-First**: Define structure once using JSON Schema, use forever
+2. **Zero-Code Extensibility**: Add new config types without touching code
+3. **Reference Data Support**: Optimized APIs for FK lookups by external services
+4. **Version Controlled**: Full audit trail of all configuration changes
+5. **Namespace Isolation**: Multi-tenant support via namespaces
+
+### Key Differentiators
+
+- ✅ **No database migrations needed** - JSON storage with schema validation
+- ✅ **Template library** - 14+ pre-built schemas for common patterns
+- ✅ **Reference data APIs** - Optimized endpoints for FK validation
+- ✅ **Secret management** - Azure Key Vault integration
+- ✅ **Multi-namespace** - Logical isolation for teams/services
+
+---
+
+## System Architecture
+
+### High-Level Architecture
 
 ```mermaid
-graph TD
-    User[User / Admin] -->|HTTPS| Frontend[Frontend SPA (Vanilla JS)]
-    Frontend -->|REST API| API[Backend API (FastAPI)]
-    API -->|SQLAlchemy| DB[(SQLite Database)]
+graph TB
+    subgraph "External Services"
+        A[Service A]
+        B[Service B]
+        C[Service C]
+    end
     
-    subgraph "Backend Services"
-        API
-        Validator[JSON Schema Validator]
+    subgraph "Config Service"
+        UI[Web UI<br/>SPA]
+        API[FastAPI<br/>Backend]
+        Templates[Template<br/>Library]
+        
+        subgraph "Storage"
+            DB[(SQLite<br/>Database)]
+            KV[Azure Key Vault<br/>Secrets]
+        end
+    end
+    
+    A -->|Reference API| API
+    B -->|Reference API| API
+    C -->|Reference API| API
+    
+    UI -->|REST API| API
+    API -->|Read/Write| DB
+    API -->|Resolve Secrets| KV
+    UI -->|Load Templates| Templates
+    
+    classDef external fill:#e1f5ff,stroke:#0288d1
+    classDef service fill:#fff3e0,stroke:#f57c00
+    classDef storage fill:#f3e5f5,stroke:#7b1fa2
+    
+    class A,B,C external
+    class UI,API,Templates service
+    class DB,KV storage
+```
+
+### Component Architecture
+
+```mermaid
+graph LR
+    subgraph "Frontend Layer"
+        SPA[Single Page App]
+        Components[React-like Components]
+        TemplatePicker[Template Picker]
+    end
+    
+    subgraph "API Layer"
+        CRUD[CRUD Routers]
+        RefData[Reference Data Router]
+        Validation[Schema Validation]
+    end
+    
+    subgraph "Data Layer"
+        ORM[SQLAlchemy ORM]
+        Models[Data Models]
+        History[Version History]
+    end
+    
+    subgraph "Integration Layer"
+        KeyVault[Key Vault Client]
+        Cache[Future: Redis Cache]
+    end
+    
+    SPA --> Components
+    Components --> TemplatePicker
+    Components -->|HTTP| CRUD
+    Components -->|HTTP| RefData
+    
+    CRUD --> Validation
+    RefData --> Validation
+    Validation --> ORM
+    ORM --> Models
+    Models --> History
+    
+    Validation -->|Resolve Secrets| KeyVault
+    RefData -->|Future| Cache
+    
+    classDef frontend fill:#e8f5e9,stroke:#388e3c
+    classDef api fill:#fff3e0,stroke:#f57c00
+    classDef data fill:#e1f5ff,stroke:#0288d1
+    classDef integration fill:#f3e5f5,stroke:#7b1fa2
+    
+    class SPA,Components,TemplatePicker frontend
+    class CRUD,RefData,Validation api
+    class ORM,Models,History data
+    class KeyVault,Cache integration
+```
+
+---
+
+## Data Model
+
+### Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    Namespace ||--o{ ConfigEntry : contains
+    ConfigSchema ||--o{ ConfigEntry : defines
+    ConfigEntry ||--o{ ConfigHistory : tracks
+    
+    Namespace {
+        int id PK
+        string name UK
+        string description
+        datetime created_at
+    }
+    
+    ConfigSchema {
+        int id PK
+        string name UK
+        int version
+        json structure
+        datetime created_at
+    }
+    
+    ConfigEntry {
+        int id PK
+        int namespace_id FK
+        int schema_id FK
+        string key
+        json value
+        int version
+        datetime created_at
+        datetime updated_at
+    }
+    
+    ConfigHistory {
+        int id PK
+        int config_id FK
+        json value
+        int version
+        datetime created_at
+    }
+```
+
+### Data Model Explanation
+
+**Namespace**
+- Logical isolation unit (e.g., "platform", "mbd", "tsa")
+- Groups related configurations
+- Supports multi-tenancy
+
+**ConfigSchema**
+- Stores JSON Schema definition
+- Validates configuration structure
+- Versioned for schema evolution
+- Examples: UseCases, MenuItems, LLMModels
+
+**ConfigEntry**
+- Actual configuration value (stored as JSON)
+- Links to namespace and schema
+- Unique constraint: (namespace_id, key)
+- Versioned for tracking changes
+
+**ConfigHistory**
+- Audit trail of all changes
+- Immutable history records
+- Enables rollback capability
+
+### Data Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant API
+    participant Validation
+    participant DB
+    
+    User->>UI: Create Config
+    UI->>User: Select Template
+    User->>UI: Fill Form
+    UI->>API: POST /configs/
+    API->>DB: Fetch Schema
+    DB-->>API: Schema Structure
+    API->>Validation: Validate Against Schema
+    alt Valid
+        Validation-->>API: ✓ Valid
+        API->>DB: Save ConfigEntry
+        API->>DB: Save ConfigHistory
+        DB-->>API: Success
+        API-->>UI: 200 OK
+        UI-->>User: Success Message
+    else Invalid
+        Validation-->>API: ✗ Invalid
+        API-->>UI: 400 Bad Request
+        UI-->>User: Error Message
     end
 ```
 
-## 3. Backend Design
+---
 
-### Technology Stack
-- **Framework**: FastAPI (Python)
-- **ORM**: SQLAlchemy
-- **Database**: SQLite (for portability, easily swappable for PostgreSQL)
-- **Validation**: `jsonschema` library
+## API Design
 
-### Data Models (`app/models.py`)
+### API Architecture
 
-1.  **Namespace**: Logical grouping of configurations.
-    - `id`, `name`, `description`
-2.  **ConfigSchema**: Defines the structure of a configuration type.
-    - `id`, `name`, `structure` (JSON Blob storing the JSON Schema)
-3.  **ConfigEntry**: The actual configuration instance.
-    - `id`, `namespace_id`, `schema_id`, `key`, `value` (JSON Blob), `version`
-4.  **ConfigHistory**: Audit trail for configuration changes.
-    - `id`, `config_id`, `value`, `version`, `changed_at`
+```mermaid
+graph TD
+    subgraph "API Endpoints"
+        NS["/namespaces/<br/>CRUD Operations"]
+        SCH["/schemas/<br/>CRUD Operations"]
+        CFG["/configs/<br/>CRUD Operations"]
+        REF["/reference/{ns}/{key}<br/>Optimized Reads"]
+    end
+    
+    subgraph "Core Logic"
+        Valid[Schema Validation]
+        History[Version Tracking]
+        Resolve[Secret Resolution]
+    end
+    
+    subgraph "Storage"
+        DB[(Database)]
+        KV[Key Vault]
+    end
+    
+    NS --> DB
+    SCH --> DB
+    CFG --> Valid
+    Valid --> History
+    History --> DB
+    
+    REF --> Resolve
+    Resolve --> DB
+    Resolve --> KV
+    
+    classDef endpoint fill:#e8f5e9,stroke:#388e3c
+    classDef logic fill:#fff3e0,stroke:#f57c00
+    classDef storage fill:#e1f5ff,stroke:#0288d1
+    
+    class NS,SCH,CFG,REF endpoint
+    class Valid,History,Resolve logic
+    class DB,KV storage
+```
 
-### API Layer (`app/routers/`)
-- **`namespaces.py`**: CRUD operations for Namespaces.
-- **`schemas.py`**: CRUD for Schemas + Validation Endpoint.
-- **`configs.py`**: CRUD for Configs.
-    - **Critical Logic**: On `create` or `update`, the backend fetches the associated `ConfigSchema` and validates the incoming `value` against the `structure` using `jsonschema.validate()`.
+### API Endpoints Overview
 
-## 4. Frontend Design
+#### Core CRUD APIs
 
-### Technology Stack
-- **Core**: Vanilla JavaScript (ES6 Modules)
-- **Styling**: Custom CSS (Glassmorphism Design System)
-- **External Libs**: `jsoneditor` (via CDN) for rich JSON editing.
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/namespaces/` | GET | List all namespaces |
+| `/namespaces/` | POST | Create namespace |
+| `/schemas/` | GET | List all schemas |
+| `/schemas/` | POST | Create schema |
+| `/configs/` | GET | List all configs |
+| `/configs/` | POST | Create config |
+| `/configs/{id}` | GET | Get specific config |
+| `/configs/{id}` | PUT | Update config |
+| `/configs/{id}` | DELETE | Delete config |
 
-### Component Architecture
-The frontend is a Single Page Application (SPA) with a simple router.
+#### Reference Data APIs (NEW)
 
-- **`app.js`**: Main entry point, handles routing.
-- **`api.js`**: Wrapper around `fetch` for API calls.
-- **`components/`**:
-    - **`Dashboard.js`**: High-level metrics.
-    - **`Namespaces.js`**: List and create namespaces.
-    - **`Schemas.js`**: Schema editor (using `JSONEditor` in Tree mode) and Playground.
-    - **`Configs.js`**: The core configuration editor.
-    - **`Modal.js`**: Reusable modal dialog.
-    - **`Toast.js`**: Notification system.
+| Endpoint | Method | Purpose | Use Case |
+|----------|--------|---------|----------|
+| `/reference/{namespace}/{key}` | GET | Get full config | Fetch all usecases |
+| `/reference/{namespace}/{key}/lookup/{id}` | GET | Lookup by ID | Validate FK reference |
+| `/reference/{namespace}/{key}/search` | GET | Search in config | Find items by text |
 
-### Dynamic Form Generation (`FormBuilder`)
-The most complex part of the frontend is the **Recursive Form Builder** in `Configs.js`.
-1.  It takes a JSON Schema as input.
-2.  It recursively traverses the schema structure.
-3.  It generates appropriate HTML inputs:
-    - `string` -> `<input type="text">`
-    - `integer` -> `<input type="number">`
-    - `boolean` -> `<select>` (True/False)
-    - `enum` -> `<select>` (Dropdown)
-    - `object` -> `<fieldset>` (Nested recursively)
-    - `array` -> Dynamic list with "Add/Remove" buttons.
-4.  It also supports an **Advanced Mode** where the user can switch to a raw JSON Tree Editor for complex data entry.
+### API Request/Response Examples
 
-## 5. Data Flow
+#### Create Schema from Template
 
-### Creating a Configuration
-1.  **User** selects a Namespace and a Schema (Type).
-2.  **Frontend** fetches the Schema structure.
-3.  **FormBuilder** renders the UI based on the Schema.
-4.  **User** fills in the form (or uses Advanced JSON Editor).
-5.  **Frontend** constructs the JSON payload and sends `POST /configs/`.
-6.  **Backend** receives the request.
-7.  **Backend** loads the referenced Schema from DB.
-8.  **Backend** validates the payload `value` against the Schema.
-    - *If Invalid*: Returns 400 Error with validation details.
-    - *If Valid*: Saves to `ConfigEntry` table and creates a `ConfigHistory` record.
-9.  **Frontend** receives success response and updates the list.
+```http
+POST /schemas/
+Content-Type: application/json
 
-## 6. Extensibility & Future Proofing
-
-The core value proposition is that **no code changes** are needed to support new configuration types.
-
-**Scenario**: You need to store a "Rate Limiting Policy" which consists of a `path` (string), `limit` (int), and `window` (int).
-
-**Old Way**:
-1.  Create `RateLimit` table in DB.
-2.  Create API endpoints.
-3.  Create UI screens.
-4.  Deploy.
-
-**Our Way**:
-1.  Open UI -> Schemas -> Define New Schema:
-    ```json
-    {
+{
+  "name": "UseCases",
+  "structure": {
+    "type": "array",
+    "items": {
       "type": "object",
       "properties": {
-        "path": { "type": "string" },
-        "limit": { "type": "integer" },
-        "window": { "type": "integer" }
-      }
+        "usecase_id": {"type": "string"},
+        "name": {"type": "string"},
+        "status": {"type": "string", "enum": ["active", "inactive"]}
+      },
+      "required": ["usecase_id", "name", "status"]
     }
-    ```
-2.  Done. You can now create "Rate Limiting Policy" configs immediately.
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "UseCases",
+  "version": 1,
+  "structure": {...},
+  "created_at": "2025-11-27T20:00:00Z"
+}
+```
+
+#### Create Configuration
+
+```http
+POST /configs/
+Content-Type: application/json
+
+{
+  "namespace_id": 1,
+  "schema_id": 1,
+  "key": "active_usecases",
+  "value": [
+    {
+      "usecase_id": "UC001",
+      "name": "Customer Onboarding",
+      "status": "active"
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "namespace_id": 1,
+  "schema_id": 1,
+  "key": "active_usecases",
+  "value": [...],
+  "version": 1,
+  "created_at": "2025-11-27T20:00:00Z"
+}
+```
+
+#### Reference Data: Lookup Item
+
+```http
+GET /reference/platform/active_usecases/lookup/UC001?id_field=usecase_id
+```
+
+**Response:**
+```json
+{
+  "usecase_id": "UC001",
+  "name": "Customer Onboarding",
+  "status": "active"
+}
+```
+
+---
+
+## Key Features
+
+### 1. Template System
+
+**Purpose**: Accelerate schema creation with pre-built templates
+
+**Templates Available:**
+- Reference Data: UseCases, OrgHierarchy, LLMModels, ArtifactTypes, NodeTypes
+- UI Configuration: MenuItems, MicrofrontendMetadata, MaintenanceMessages
+- External Integration: ThirdPartyURLs
+- Sensitive Data: SecretKeys, PostgreSQLConnection
+- Workflow Config: UseCaseOnboarding, FederatedCatalog
+
+**Usage Flow:**
+```mermaid
+sequenceDiagram
+    User->>UI: Click "Use Template"
+    UI->>Templates: Load templates.json
+    Templates-->>UI: 14 Templates
+    UI->>User: Show Template Picker
+    User->>UI: Select Template
+    UI->>Form: Auto-fill Schema
+    User->>UI: Customize (optional)
+    UI->>API: Create Schema
+```
+
+### 2. Reference Data Pattern
+
+**Problem**: Other services need to reference config data as foreign keys
+
+**Solution**: Optimized `/reference/*` endpoints
+
+**Example Use Case:**
+```python
+# Service A needs to validate usecase_id
+def validate_usecase(usecase_id: str) -> bool:
+    response = requests.get(
+        f'{CONFIG_SERVICE}/reference/platform/active_usecases/lookup/{usecase_id}',
+        params={'id_field': 'usecase_id'}
+    )
+    return response.status_code == 200
+```
+
+### 3. Secret Management
+
+**Problem**: Storing sensitive data (passwords, API keys) securely
+
+**Solution**: Azure Key Vault integration with `vault://` references
+
+**Pattern:**
+```json
+{
+  "database": "production",
+  "password": "vault://db-prod-password"
+}
+```
+
+**Resolution:**
+```http
+GET /reference/global/db_connection?resolve_vault=true
+```
+
+Returns actual password from Key Vault.
+
+### 4. Version History
+
+Every configuration change is tracked:
+- Who changed it
+- When it changed
+- What the previous value was
+- Enables rollback
+
+---
+
+## Security & Best Practices
+
+### Security Features
+
+1. **Secret Management**
+   - Secrets stored in Azure Key Vault
+   - Config stores references only
+   - Optional resolution on-demand
+
+2. **Validation**
+   - JSON Schema validation enforced
+   - Prevents invalid data
+   - Type checking
+
+3. **Audit Trail**
+   - All changes logged
+   - Immutable history
+   - Compliance ready
+
+### Best Practices
+
+**For Schema Design:**
+- Use templates as starting point
+- Define required fields clearly
+- Use enums for fixed values
+- Add descriptions for documentation
+
+**For Namespace Organization:**
+- One namespace per team/service
+- Platform namespace for shared configs
+- Use meaningful names
+
+**For Configuration Keys:**
+- Use descriptive, unique keys
+- Follow naming convention (e.g., snake_case)
+- Group related configs
+
+**For External Services:**
+- Cache reference data locally
+- Use lookup endpoints for FK validation
+- Handle 404s gracefully
+
+---
+
+## Technology Stack
+
+**Backend:**
+- FastAPI (Python web framework)
+- SQLAlchemy (ORM)
+- SQLite (Database)
+- Pydantic (Data validation)
+- jsonschema (Schema validation)
+
+**Frontend:**
+- Vanilla JavaScript (ES6 modules)
+- JSONEditor (Visual JSON editing)
+- Modern CSS (Glassmorphism design)
+
+**Integration:**
+- Azure Key Vault (Secret management)
+- Future: Redis (Caching)
+
+---
+
+## Deployment Architecture
+
+```mermaid
+graph TB
+    subgraph "Production Environment"
+        LB[Load Balancer]
+        
+        subgraph "App Tier"
+            API1[FastAPI Instance 1]
+            API2[FastAPI Instance 2]
+        end
+        
+        subgraph "Data Tier"
+            DB[(PostgreSQL<br/>Production)]
+            DBReplica[(PostgreSQL<br/>Replica)]
+        end
+        
+        subgraph "Cache Tier"
+            Redis[(Redis Cache)]
+        end
+        
+        subgraph "Secrets"
+            KV[Azure Key Vault]
+        end
+    end
+    
+    LB --> API1
+    LB --> API2
+    
+    API1 --> DB
+    API2 --> DB
+    DB --> DBReplica
+    
+    API1 --> Redis
+    API2 --> Redis
+    
+    API1 --> KV
+    API2 --> KV
+    
+    classDef lb fill:#ffebee,stroke:#c62828
+    classDef app fill:#e8f5e9,stroke:#388e3c
+    classDef data fill:#e1f5ff,stroke:#0288d1
+    classDef cache fill:#fff3e0,stroke:#f57c00
+    classDef secret fill:#f3e5f5,stroke:#7b1fa2
+    
+    class LB lb
+    class API1,API2 app
+    class DB,DBReplica data
+    class Redis cache
+    class KV secret
+```
+
+**Notes:**
+- Current: SQLite (development)
+- Production: Use PostgreSQL
+- Add Redis for reference data caching
+- Horizontal scaling via load balancer
+
+---
+
+## Next Steps
+
+1. **Production Readiness**
+   - Switch to PostgreSQL
+   - Add Redis caching
+   - Implement API authentication
+   - Add rate limiting
+
+2. **Enhanced Features**
+   - Bulk import/export
+   - Config comparison/diff
+   - Approval workflows
+   - Scheduled changes
+
+3. **Monitoring**
+   - API metrics
+   - Usage analytics
+   - Performance monitoring
+   - Error tracking
+
+---
+
+For detailed API specifications, see [api-reference.md](./api-reference.md)  
+For usage examples, see [usage-guide.md](./usage-guide.md)

@@ -1,0 +1,112 @@
+/* Template Picker Styles */
+.template-picker {
+    min-height: 400px;
+}
+
+.category-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--glass-border);
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: var(--transition);
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.template-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.template-card:hover {
+    border-color: var(--primary);
+    background: rgba(99, 102, 241, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.2);
+}
+
+.template-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.template-card h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.template-card p {
+    margin: 0;
+    flex: 1;
+}
+
+.template-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-reference {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.badge-ui {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c084fc;
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
+
+.badge-config {
+    background: rgba(99, 102, 241, 0.2);
+    color: #818cf8;
+}

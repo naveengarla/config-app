@@ -10,6 +10,7 @@ class Namespace(Base):
     name = Column(String, unique=True, index=True, nullable=False)
     description = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     configs = relationship("ConfigEntry", back_populates="namespace")
 
@@ -21,6 +22,7 @@ class ConfigSchema(Base):
     version = Column(Integer, default=1)
     structure = Column(JSON, nullable=False) # The JSON Schema definition
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     configs = relationship("ConfigEntry", back_populates="schema")
 
@@ -35,6 +37,7 @@ class ConfigEntry(Base):
     version = Column(Integer, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     namespace = relationship("Namespace", back_populates="configs")
     schema = relationship("ConfigSchema", back_populates="configs")

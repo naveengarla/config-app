@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Button Test</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body {
+            padding: 2rem;
+        }
+
+        .test-section {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Delete Button Test Page</h1>
+
+    <div class="test-section">
+        <h2>Button Tests</h2>
+        <p>Testing all button styles:</p>
+
+        <div style="display: flex; gap: 1rem; margin: 1rem 0;">
+            <button class="btn btn-primary">Primary Button</button>
+            <button class="btn btn-secondary">Secondary Button</button>
+            <button class="btn btn-danger">Delete Button</button>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin: 1rem 0;">
+            <button class="btn btn-primary btn-sm">Primary SM</button>
+            <button class="btn btn-secondary btn-sm">Secondary SM</button>
+            <button class="btn btn-danger btn-sm">Delete SM</button>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Namespace Table Test</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td><strong>platform</strong></td>
+                    <td>Platform configs</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger delete-namespace-btn" data-id="1"
+                            data-name="platform">Delete</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td><strong>mbd</strong></td>
+                    <td>MBD configs</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger delete-namespace-btn" data-id="2"
+                            data-name="mbd">Delete</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="test-section">
+        <h2>JavaScript Test</h2>
+        <p>Click a delete button to test the confirm dialog:</p>
+        <button class="btn btn-danger" id="test-delete-btn">Test Delete with Confirm</button>
+        <div id="test-result" style="margin-top: 1rem;"></div>
+    </div>
+
+    <script>
+        // Test delete button click
+        document.querySelectorAll('.delete-namespace-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.id;
+                const name = btn.dataset.name;
+                if (confirm(`Are you sure you want to delete namespace "${name}"?`)) {
+                    alert(`Would delete namespace ${id}: ${name}`);
+                }
+            });
+        });
+
+        document.getElementById('test-delete-btn').addEventListener('click', () => {
+            if (confirm('Test confirmation dialog?')) {
+                document.getElementById('test-result').innerHTML = '<p style="color: var(--success);">✓ Confirmed!</p>';
+            } else {
+                document.getElementById('test-result').innerHTML = '<p style="color: var(--danger);">✗ Cancelled</p>';
+            }
+        });
+    </script>
+</body>
+
+</html>

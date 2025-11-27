@@ -1,0 +1,643 @@
+{
+    "templates": [
+        {
+            "id": "usecases",
+            "name": "Use Cases List",
+            "description": "Master list of use cases (reference data for FK references)",
+            "category": "Reference Data",
+            "purpose": "reference_data",
+            "unique_key_field": "usecase_id",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "usecase_id": {
+                            "type": "string",
+                            "pattern": "^UC\\d{3}$",
+                            "description": "Unique identifier (e.g., UC001)"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "category": {
+                            "type": "string"
+                        },
+                        "owner": {
+                            "type": "string",
+                            "format": "email"
+                        },
+                        "status": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "inactive",
+                                "deprecated"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "usecase_id",
+                        "name",
+                        "status"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "menu_items",
+            "name": "Menu Items",
+            "description": "Hierarchical navigation menu structure",
+            "category": "UI Configuration",
+            "purpose": "ui_config",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string"
+                        },
+                        "label": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        },
+                        "route": {
+                            "type": "string"
+                        },
+                        "permissions": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "order": {
+                            "type": "integer"
+                        },
+                        "children": {
+                            "type": "array",
+                            "items": {
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "required": [
+                        "id",
+                        "label"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "org_hierarchy",
+            "name": "Organization Hierarchy",
+            "description": "Organizational structure tree",
+            "category": "Reference Data",
+            "purpose": "reference_data",
+            "unique_key_field": "org_id",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "org_id": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "parent_id": {
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        },
+                        "manager": {
+                            "type": "string",
+                            "format": "email"
+                        },
+                        "level": {
+                            "type": "integer"
+                        },
+                        "children": {
+                            "type": "array",
+                            "items": {
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "required": [
+                        "org_id",
+                        "name"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "third_party_urls",
+            "name": "Third Party URLs",
+            "description": "External API endpoints and service URLs",
+            "category": "External Integration",
+            "purpose": "config",
+            "schema": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "string",
+                    "format": "uri"
+                }
+            }
+        },
+        {
+            "id": "secret_keys",
+            "name": "Secret Keys",
+            "description": "API keys and secrets (use vault:// for Azure Key Vault refs)",
+            "category": "Sensitive Data",
+            "purpose": "secrets",
+            "sensitive": true,
+            "schema": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "string",
+                    "description": "Use vault://secret-name for Key Vault reference"
+                }
+            }
+        },
+        {
+            "id": "postgresql_connection",
+            "name": "PostgreSQL Connection",
+            "description": "Database connection configuration",
+            "category": "Sensitive Data",
+            "purpose": "secrets",
+            "sensitive": true,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "host": {
+                        "type": "string"
+                    },
+                    "port": {
+                        "type": "integer",
+                        "default": 5432
+                    },
+                    "database": {
+                        "type": "string"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "Use vault://password-name"
+                    },
+                    "ssl_mode": {
+                        "type": "string",
+                        "enum": [
+                            "disable",
+                            "require",
+                            "verify-ca",
+                            "verify-full"
+                        ],
+                        "default": "require"
+                    }
+                },
+                "required": [
+                    "host",
+                    "database",
+                    "username",
+                    "password"
+                ]
+            }
+        },
+        {
+            "id": "microfrontend_metadata",
+            "name": "Microfrontend Metadata",
+            "description": "Registration details for microfrontends",
+            "category": "UI Configuration",
+            "purpose": "reference_data",
+            "unique_key_field": "mfe_id",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "mfe_id": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "entry_url": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "scope": {
+                            "type": "string"
+                        },
+                        "module": {
+                            "type": "string"
+                        },
+                        "routes": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "permissions": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "version": {
+                            "type": "string"
+                        },
+                        "enabled": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    },
+                    "required": [
+                        "mfe_id",
+                        "name",
+                        "entry_url",
+                        "scope"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "llm_models",
+            "name": "LLM Model Details",
+            "description": "AI model registry and metadata",
+            "category": "Reference Data",
+            "purpose": "reference_data",
+            "unique_key_field": "model_id",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "model_id": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "provider": {
+                            "type": "string",
+                            "enum": [
+                                "openai",
+                                "anthropic",
+                                "azure_openai",
+                                "custom"
+                            ]
+                        },
+                        "endpoint": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "max_tokens": {
+                            "type": "integer"
+                        },
+                        "cost_per_1k_tokens": {
+                            "type": "number"
+                        },
+                        "capabilities": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "enabled": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    },
+                    "required": [
+                        "model_id",
+                        "name",
+                        "provider"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "llm_farms",
+            "name": "LLM Farm Details",
+            "description": "LLM endpoint load balancer configuration",
+            "category": "Reference Data",
+            "purpose": "reference_data",
+            "unique_key_field": "farm_id",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "farm_id": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "region": {
+                            "type": "string"
+                        },
+                        "models": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "endpoints": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "format": "uri"
+                            }
+                        },
+                        "load_balancing": {
+                            "type": "string",
+                            "enum": [
+                                "round_robin",
+                                "least_connections",
+                                "random"
+                            ]
+                        },
+                        "health_check_url": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "farm_id",
+                        "name",
+                        "endpoints"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "artifact_types",
+            "name": "Artifact Types",
+            "description": "Master data for artifact classification",
+            "category": "Reference Data",
+            "purpose": "reference_data",
+            "unique_key_field": "artifact_type_id",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "artifact_type_id": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "category": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        },
+                        "allowed_extensions": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "max_size_mb": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    "required": [
+                        "artifact_type_id",
+                        "name",
+                        "category"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "node_types",
+            "name": "Node Types",
+            "description": "Workflow/graph node type definitions",
+            "category": "Reference Data",
+            "purpose": "reference_data",
+            "unique_key_field": "node_type_id",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "node_type_id": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "category": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        },
+                        "inputs": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "outputs": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "required": [
+                        "node_type_id",
+                        "name"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "maintenance_messages",
+            "name": "Maintenance Messages",
+            "description": "System status and maintenance banner messages",
+            "category": "UI Configuration",
+            "purpose": "ui_config",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "message_id": {
+                            "type": "string"
+                        },
+                        "text": {
+                            "type": "string"
+                        },
+                        "severity": {
+                            "type": "string",
+                            "enum": [
+                                "info",
+                                "warning",
+                                "error",
+                                "success"
+                            ]
+                        },
+                        "start_date": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "end_date": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "display_pages": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "dismissible": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    },
+                    "required": [
+                        "message_id",
+                        "text",
+                        "severity"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "usecase_onboarding",
+            "name": "Use Case Onboarding Workflow",
+            "description": "Multi-step usecase onboarding configuration",
+            "category": "Workflow Configuration",
+            "purpose": "config",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "steps": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "step_id": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "fields": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "required": {
+                                                "type": "boolean"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "auto_provisioning": {
+                        "type": "object",
+                        "properties": {
+                            "database": {
+                                "type": "boolean"
+                            },
+                            "storage": {
+                                "type": "boolean"
+                            },
+                            "api_keys": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "id": "federated_catalog",
+            "name": "Federated Context Catalog",
+            "description": "Federated data catalog configuration",
+            "category": "Workflow Configuration",
+            "purpose": "config",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "catalog_id": {
+                        "type": "string"
+                    },
+                    "federation_settings": {
+                        "type": "object",
+                        "properties": {
+                            "enabled": {
+                                "type": "boolean"
+                            },
+                            "sync_interval_hours": {
+                                "type": "integer"
+                            },
+                            "namespaces": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "data_sources": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "source_id": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "connection_config_ref": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

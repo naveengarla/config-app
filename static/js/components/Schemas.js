@@ -1,6 +1,7 @@
 import { api } from '../api.js';
 import { Toast } from './Toast.js';
 import { Modal } from './Modal.js';
+import { TemplatePicker } from './TemplatePicker.js';
 
 export async function renderSchemas(container) {
     const schemas = await api.get('/schemas/');
@@ -8,7 +9,10 @@ export async function renderSchemas(container) {
     container.innerHTML = `
         <div class="header">
             <h1>Schemas</h1>
-            <button class="btn btn-primary" id="create-schema-btn">Define New Schema</button>
+            <div class="flex gap-2">
+                <button class="btn btn-secondary" id="use-template-btn">📋 Use Template</button>
+                <button class="btn btn-primary" id="create-schema-btn">Define New Schema</button>
+            </div>
         </div>
         
         <div class="card" id="create-schema-form" style="display: none;">
@@ -51,6 +55,7 @@ export async function renderSchemas(container) {
                             <td>
                                 <button class="btn btn-secondary btn-sm view-schema-btn" data-schema='${JSON.stringify(s).replace(/'/g, "&#39;")}'>View JSON</button>
                                 <button class="btn btn-primary btn-sm test-schema-btn" data-schema='${JSON.stringify(s).replace(/'/g, "&#39;")}'>Test / Playground</button>
+                                <button class="btn btn-danger btn-sm delete-schema-btn" data-id="${s.id}" data-name="${s.name}">Delete</button>
                             </td>
                         </tr>
                     `).join('')}
@@ -83,6 +88,25 @@ export async function renderSchemas(container) {
     createBtn.addEventListener('click', () => {
         formCard.style.display = 'block';
         createBtn.style.display = 'none';
+    });
+
+    // Use Template button
+    const useTemplateBtn = container.querySelector('#use-template-btn');
+    useTemplateBtn.addEventListener('click', async () => {
+        TemplatePicker.show((template) => {
+            // Fill form with template data
+            const nameInput = form.querySelector('[name="name"]');
+            nameInput.value = template.name;
+
+            // Set editor value
+            editor.set(template.schema);
+
+            // Show form
+            formCard.style.display = 'block';
+            createBtn.style.display = 'none';
+
+            Toast.info('Template Loaded', `Using template: ${template.name}`);
+        });
     });
 
     cancelBtn.addEventListener('click', () => {
@@ -204,4 +228,22 @@ export async function renderSchemas(container) {
             }
         });
     }
+
+    // Delete button handlers
+    container.querySelectorAll('.delete-schema-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const name = btn.dataset.name;
+
+            if (confirm(`Are you sure you want to delete schema "${name}"?`)) {
+                try {
+                    await api.delete(`/schemas/${id}`);
+                    Toast.success('Deleted', `Schema "${name}" deleted successfully`);
+                    await renderSchemas(container);
+                } catch (err) {
+                    Toast.error('Error', err.message);
+                }
+            }
+        });
+    });
 }

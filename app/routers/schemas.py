@@ -28,15 +28,35 @@ def create_schema(schema: schemas.ConfigSchemaCreate, db: Session = Depends(get_
 
 @router.get("/", response_model=List[schemas.ConfigSchema])
 def read_schemas(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    schemas_list = db.query(models.ConfigSchema).offset(skip).limit(limit).all()
+    schemas_list = db.query(models.ConfigSchema).filter(models.ConfigSchema.deleted_at.is_(None)).offset(skip).limit(limit).all()
     return schemas_list
 
 @router.get("/{schema_id}", response_model=schemas.ConfigSchema)
 def read_schema(schema_id: int, db: Session = Depends(get_db)):
-    schema = db.query(models.ConfigSchema).filter(models.ConfigSchema.id == schema_id).first()
+    schema = db.query(models.ConfigSchema).filter(
+        models.ConfigSchema.id == schema_id,
+        models.ConfigSchema.deleted_at.is_(None)
+    ).first()
     if schema is None:
         raise HTTPException(status_code=404, detail="Schema not found")
     return schema
+
+@router.delete("/{schema_id}")
+def delete_schema(schema_id: int, db: Session = Depends(get_db)):
+    """Soft delete a schema"""
+    schema = db.query(models.ConfigSchema).filter(
+        models.ConfigSchema.id == schema_id,
+        models.ConfigSchema.deleted_at.is_(None)
+    ).first()
+    if schema is None:
+        raise HTTPException(status_code=404, detail="Schema not found")
+    
+    # Soft delete
+    from datetime import datetime
+    schema.deleted_at = datetime.utcnow()
+    db.commit()
+    
+    return {"message": "Schema deleted successfully", "id": schema_id}
 
 class ValidationRequest(BaseModel):
     schema_structure: Dict[str, Any]

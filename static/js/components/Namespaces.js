@@ -35,6 +35,7 @@ export async function renderNamespaces(container) {
                         <th>Name</th>
                         <th>Description</th>
                         <th>Created At</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -44,6 +45,9 @@ export async function renderNamespaces(container) {
                             <td><strong>${ns.name}</strong></td>
                             <td>${ns.description || '-'}</td>
                             <td>${new Date(ns.created_at).toLocaleString()}</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger delete-namespace-btn" data-id="${ns.id}" data-name="${ns.name}">Delete</button>
+                            </td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -82,5 +86,23 @@ export async function renderNamespaces(container) {
         } catch (err) {
             alert(err.message);
         }
+    });
+
+    // Delete button handlers
+    container.querySelectorAll('.delete-namespace-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const name = btn.dataset.name;
+
+            if (confirm(`Are you sure you want to delete namespace "${name}"?`)) {
+                try {
+                    await api.delete(`/namespaces/${id}`);
+                    Toast.success('Deleted', `Namespace "${name}" deleted successfully`);
+                    await renderNamespaces(container);
+                } catch (err) {
+                    Toast.error('Error', err.message);
+                }
+            }
+        });
     });
 }

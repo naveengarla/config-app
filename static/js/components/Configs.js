@@ -81,6 +81,7 @@ export async function renderConfigs(container) {
                             <td>v${c.version}</td>
                             <td>
                                 <button class="btn btn-secondary btn-sm view-config-btn" data-config='${JSON.stringify(c).replace(/'/g, "&#39;")}'>View</button>
+                                <button class="btn btn-danger btn-sm delete-config-btn" data-id="${c.id}" data-key="${c.key}">Delete</button>
                             </td>
                         </tr>
                     `).join('')}
@@ -163,6 +164,24 @@ export async function renderConfigs(container) {
                 modes: ['view', 'code'],
                 name: config.key
             }, config.value);
+        });
+    });
+
+    // Delete Config Handlers
+    container.querySelectorAll('.delete-config-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const key = btn.dataset.key;
+
+            if (confirm(`Are you sure you want to delete configuration "${key}"?`)) {
+                try {
+                    await api.delete(`/configs/${id}`);
+                    Toast.success('Deleted', `Configuration "${key}" deleted successfully`);
+                    await renderConfigs(container);
+                } catch (err) {
+                    Toast.error('Error', err.message);
+                }
+            }
         });
     });
 

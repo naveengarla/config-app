@@ -1,7 +1,7 @@
 import requests
 import json
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8001"
 
 def create_ns(name, desc):
     requests.post(f"{BASE_URL}/namespaces/", json={"name": name, "description": desc})

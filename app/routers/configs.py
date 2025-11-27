@@ -63,7 +63,7 @@ def create_config(config: schemas.ConfigEntryCreate, db: Session = Depends(get_d
 
 @router.get("/", response_model=List[schemas.ConfigEntry])
 def read_configs(skip: int = 0, limit: int = 100, namespace_id: int = None, db: Session = Depends(get_db)):
-    query = db.query(models.ConfigEntry)
+    query = db.query(models.ConfigEntry).filter(models.ConfigEntry.deleted_at.is_(None))
     if namespace_id:
         query = query.filter(models.ConfigEntry.namespace_id == namespace_id)
     configs = query.offset(skip).limit(limit).all()
@@ -71,14 +71,20 @@ def read_configs(skip: int = 0, limit: int = 100, namespace_id: int = None, db: 
 
 @router.get("/{config_id}", response_model=schemas.ConfigEntry)
 def read_config(config_id: int, db: Session = Depends(get_db)):
-    config = db.query(models.ConfigEntry).filter(models.ConfigEntry.id == config_id).first()
+    config = db.query(models.ConfigEntry).filter(
+        models.ConfigEntry.id == config_id,
+        models.ConfigEntry.deleted_at.is_(None)
+    ).first()
     if config is None:
         raise HTTPException(status_code=404, detail="Config not found")
     return config
 
 @router.put("/{config_id}", response_model=schemas.ConfigEntry)
 def update_config(config_id: int, config_update: schemas.ConfigEntryUpdate, db: Session = Depends(get_db)):
-    db_config = db.query(models.ConfigEntry).filter(models.ConfigEntry.id == config_id).first()
+    db_config = db.query(models.ConfigEntry).filter(
+        models.ConfigEntry.id == config_id,
+        models.ConfigEntry.deleted_at.is_(None)
+    ).first()
     if not db_config:
         raise HTTPException(status_code=404, detail="Config not found")
     
@@ -103,3 +109,20 @@ def update_config(config_id: int, config_update: schemas.ConfigEntryUpdate, db: 
     db.commit()
     db.refresh(db_config)
     return db_config
+
+@router.delete("/{config_id}")
+def delete_config(config_id: int, db: Session = Depends(get_db)):
+    """Soft delete a configuration"""
+    config = db.query(models.ConfigEntry).filter(
+        models.ConfigEntry.id == config_id,
+        models.ConfigEntry.deleted_at.is_(None)
+    ).first()
+    if config is None:
+        raise HTTPException(status_code=404, detail="Config not found")
+    
+    # Soft delete
+    from datetime import datetime
+    config.deleted_at = datetime.utcnow()
+    db.commit()
+    
+    return {"message": "Configuration deleted successfully", "id": config_id}
