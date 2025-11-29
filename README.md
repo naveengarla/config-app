@@ -1,3 +1,26 @@
+# Config Service
+
+## 🚀 Quick Start
+
+### 1. Start the Backend
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the server
+python -m uvicorn app.main:app --reload --port 8001
+```
+
+### 2. Start the Frontend (New!)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Open [http://localhost:5173](http://localhost:5173) to view the new UI.
+
+---
+
 # Generic Configuration Service
 
 A powerful, schema-driven configuration management platform designed to be generic, scalable, and extensible.

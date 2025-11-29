@@ -1,8 +1,9 @@
-import requests
-import json
 import time
 
+import requests
+
 BASE_URL = "http://localhost:8001"
+
 
 def test_api():
     print("Waiting for server to start...")
@@ -24,13 +25,9 @@ def test_api():
         "name": "TestSchema",
         "structure": {
             "type": "object",
-            "properties": {
-                "host": {"type": "string"},
-                "port": {"type": "integer"},
-                "active": {"type": "boolean"}
-            },
-            "required": ["host", "port"]
-        }
+            "properties": {"host": {"type": "string"}, "port": {"type": "integer"}, "active": {"type": "boolean"}},
+            "required": ["host", "port"],
+        },
     }
     resp = requests.post(f"{BASE_URL}/schemas/", json=schema_data)
     if resp.status_code != 200:
@@ -45,11 +42,7 @@ def test_api():
         "namespace_id": ns_id,
         "schema_id": schema_id,
         "key": "db_config",
-        "value": {
-            "host": "localhost",
-            "port": 5432,
-            "active": True
-        }
+        "value": {"host": "localhost", "port": 5432, "active": True},
     }
     resp = requests.post(f"{BASE_URL}/configs/", json=config_data)
     if resp.status_code != 200:
@@ -65,14 +58,15 @@ def test_api():
         "key": "db_config_invalid",
         "value": {
             "host": "localhost",
-            "port": "not_an_integer" # Error here
-        }
+            "port": "not_an_integer",  # Error here
+        },
     }
     resp = requests.post(f"{BASE_URL}/configs/", json=invalid_data)
     if resp.status_code == 400:
         print("Validation failed as expected!")
     else:
         print(f"Unexpected status code: {resp.status_code}")
+
 
 if __name__ == "__main__":
     try:

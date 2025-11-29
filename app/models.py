@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, JSON, UniqueConstraint
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, UniqueConstraint, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from .database import Base
+
 
 class Namespace(Base):
     __tablename__ = "namespaces"
@@ -14,17 +16,23 @@ class Namespace(Base):
 
     configs = relationship("ConfigEntry", back_populates="namespace")
 
+
 class ConfigSchema(Base):
     __tablename__ = "config_schemas"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False)
+    name = Column(String, index=True, nullable=False)  # Removed unique=True
+    description = Column(String, nullable=True)
     version = Column(Integer, default=1)
-    structure = Column(JSON, nullable=False) # The JSON Schema definition
+    structure = Column(JSON, nullable=False)
+    is_active = Column(Boolean, default=True)  # New field for lifecycle management
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     configs = relationship("ConfigEntry", back_populates="schema")
+
+    __table_args__ = (UniqueConstraint("name", "version", name="_name_version_uc"),)
+
 
 class ConfigEntry(Base):
     __tablename__ = "config_entries"
@@ -43,7 +51,8 @@ class ConfigEntry(Base):
     schema = relationship("ConfigSchema", back_populates="configs")
     history = relationship("ConfigHistory", back_populates="config")
 
-    __table_args__ = (UniqueConstraint('namespace_id', 'key', name='_namespace_key_uc'),)
+    __table_args__ = (UniqueConstraint("namespace_id", "key", name="_namespace_key_uc"),)
+
 
 class ConfigHistory(Base):
     __tablename__ = "config_history"

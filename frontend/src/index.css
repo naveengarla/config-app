@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+/* RJSF Theme Overrides */
+.form-group {
+    @apply mb-4;
+}
+
+label {
+    @apply block text-sm font-medium text-slate-700 mb-1;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+    @apply w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow;
+}
+
+.btn-add,
+.array-item-add {
+    @apply flex items-center gap-2 text-xs text-indigo-600 hover:text-indigo-700 mt-2 font-medium;
+}
+
+.btn-danger,
+.array-item-remove {
+    @apply text-red-500 hover:text-red-600 p-1;
+}
+
+.field-description {
+    @apply text-xs text-slate-500 mt-1;
+}
+
+.panel-danger {
+    @apply hidden;
+}
+
+.text-danger {
+    @apply text-xs text-red-500 mt-1;
+}
+
+/* Compact Mode */
+.rjsf-compact .form-group {
+    @apply mb-2;
+}
+
+.rjsf-compact input[type="text"],
+.rjsf-compact input[type="number"],
+.rjsf-compact input[type="email"],
+.rjsf-compact input[type="password"],
+.rjsf-compact select,
+.rjsf-compact textarea {
+    @apply py-1.5 text-sm;
+}
+
+.rjsf-compact label {
+    @apply text-xs mb-0.5;
+}
