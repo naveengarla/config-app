@@ -14,7 +14,8 @@ input[type="number"],
 input[type="email"],
 input[type="password"],
 select,
-textarea {
+textarea,
+.form-control {
     @apply w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow;
 }
 
@@ -50,7 +51,8 @@ textarea {
 .rjsf-compact input[type="email"],
 .rjsf-compact input[type="password"],
 .rjsf-compact select,
-.rjsf-compact textarea {
+.rjsf-compact textarea,
+.rjsf-compact .form-control {
     @apply py-1.5 text-sm;
 }
 

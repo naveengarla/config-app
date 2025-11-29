@@ -71,7 +71,11 @@ The system is built as a modern full-stack web application:
 ### Schemas
 ![Schemas](docs/images/schemas.png)
 
+![Schemas Edit](docs/images/schemas-2.png)
+
 ### Configs
+![Configs](docs/images/configs.png)
+
 ![Configs](docs/images/configs.png)
 
 ## 🚀 Getting Started
