@@ -49,17 +49,19 @@ The **Generic Configuration Service** solves this by adopting a **"Schema-First"
 ## 🏗️ Solution Approach
 
 ### Architecture
-The system is built as a 3-tier web application:
+The system is built as a modern full-stack web application:
 
 -   **Backend**: **FastAPI** (Python) serves as the REST API layer. It handles CRUD operations and uses the `jsonschema` library to perform strict validation of configuration payloads against their stored schemas.
 -   **Database**: **SQLite** (via **SQLAlchemy**) provides a lightweight, portable storage engine. Data is stored as JSON blobs, allowing for infinite flexibility while maintaining relational integrity for metadata (Namespaces, Schemas).
--   **Frontend**: A **Vanilla JS** Single Page Application (SPA) with a custom **Glassmorphism** design system. It features a **Recursive Form Builder** that traverses JSON Schemas to generate complex, nested forms on the fly.
+-   **Frontend**: **React 18** + **Vite** + **Tailwind CSS**. It features a modern, clean **Light Theme** UI with a powerful **Visual Schema Editor** and dynamic form generation using `@rjsf/core`.
 
 ### Key Features
 -   **Schema-First Design**: Define `{"type": "boolean"}` and get a checkbox. Define an `enum` and get a dropdown. Define an `array` of `objects` and get a dynamic table editor.
--   **Visual Editors**: Integrated **JSON Tree Editors** for power users to manipulate raw data structures.
--   **Validation Playground**: Test your schemas against sample data in real-time before going live.
--   **Modal & Toast UI**: A modern, responsive user experience.
+-   **Visual Schema Editor**: Create complex nested schemas without writing a single line of JSON.
+-   **Version Control**: Schemas are immutable and versioned. Editing a schema creates a new version, ensuring existing configs never break.
+-   **Dynamic Forms**: Configuration forms are automatically generated from your schemas.
+-   **Search & Discovery**: Instantly find configs by key, namespace, or schema.
+-   **Validation**: Strict server-side validation ensures data integrity.
 
 ## 🚀 Getting Started
 
