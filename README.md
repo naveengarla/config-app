@@ -63,6 +63,17 @@ The system is built as a modern full-stack web application:
 -   **Search & Discovery**: Instantly find configs by key, namespace, or schema.
 -   **Validation**: Strict server-side validation ensures data integrity.
 
+## 📸 Screenshots
+
+### Dashboard
+![Dashboard](docs/images/dashboard.png)
+
+### Schemas
+![Schemas](docs/images/schemas.png)
+
+### Configs
+![Configs](docs/images/configs.png)
+
 ## 🚀 Getting Started
 
 ### Prerequisites
