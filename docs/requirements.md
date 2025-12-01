@@ -11,16 +11,25 @@ This document outlines the functional and non-functional requirements for the Ge
 *   **FR-003 Schema Validation**: All configuration data MUST be strictly validated against a defined JSON Schema before storage. Invalid data MUST be rejected with clear error messages.
 *   **FR-004 Versioning**: The system MUST maintain a version history for every configuration entry. Updates MUST create a new version; previous versions MUST be preserved.
 *   **FR-005 History Tracking**: Users MUST be able to view the history of changes for a configuration, including the version number, value, and timestamp of change.
+*   **FR-005.1 Optimistic Locking**: The system MUST implement optimistic locking using the `version` field. Updates MUST include the version of the config being modified; if the server's version is higher, the update MUST be rejected to prevent lost updates.
 
 ### 2.2 Schema Management
 *   **FR-006 Schema Definition**: Users MUST be able to define the structure of configurations using **JSON Schema Draft 07**.
+*   **FR-006.1 Global Scope**: Schemas are **Global** entities and can be used by configurations in any Namespace. This promotes standardization across teams.
 *   **FR-007 Visual Schema Editor**: The system MUST provide a visual interface (drag-and-drop or form-based) to create and edit schemas without writing raw JSON.
 *   **FR-008 Schema Versioning**: Schemas MUST be versioned. Editing a schema MUST create a new version to ensure backward compatibility with existing configurations.
-*   **FR-009 Soft Delete**: Users MUST be able to mark schemas as inactive (soft delete) rather than permanently removing them, to preserve referential integrity.
+    *   **FR-008.1 Configuration Pinning**: Configurations MUST be linked to a specific **version** of a Schema. Updating a Schema to a new version MUST NOT automatically affect existing configurations.
+    *   **FR-008.2 Configuration Migration**: The system SHOULD provide a mechanism to "Upgrade" a configuration to the latest Schema version, triggering a re-validation of the data against the new schema.
+*   **FR-009 Schema Lifecycle (Soft Delete)**: Users MUST be able to mark schemas as "Inactive" or "Deprecated". This MUST be a soft delete operation that preserves the database record.
+    *   **FR-009.1 Read Access**: Existing configurations linked to a soft-deleted schema MUST remain fully **readable** by client applications to prevent service disruption.
+    *   **FR-009.2 Write Access**: Existing configurations linked to a soft-deleted schema SHOULD remain **updatable** (to allow critical hotfixes), but the UI SHOULD display a warning indicating the schema is deprecated.
+    *   **FR-009.3 Creation Restriction**: The system MUST strictly **block** the creation of **NEW** configuration entries using a soft-deleted schema.
+    *   **FR-009.4 Hard Delete**: Permanent deletion of a schema MUST ONLY be allowed if there are **NO** existing configuration entries linked to it (i.e., it is unused).
 
 ### 2.3 Namespace Management
 *   **FR-010 Logical Grouping**: The system MUST support Namespaces to logically group configurations (e.g., by Team, Service, or Environment).
 *   **FR-011 Namespace Isolation**: Configurations MUST be scoped to a specific Namespace.
+*   **FR-011.1 Deletion Safety**: The system MUST prevent the deletion of a Namespace if it contains active configurations. Users must delete all configs before deleting the namespace.
 
 ### 2.4 Reference Data & External Consumption API
 *   **FR-012 External Access**: The system MUST provide optimized REST API endpoints (`/reference/{namespace}/{key}`) for external services to consume configurations.
